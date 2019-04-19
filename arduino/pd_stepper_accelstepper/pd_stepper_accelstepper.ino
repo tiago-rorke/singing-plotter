@@ -1,3 +1,4 @@
+#include <AccelStepper.h>
 
 // GRBL shield pinouts
 #define STEP_X 2
@@ -8,66 +9,51 @@
 #define DIR_Z 7
 #define ENABLE 8
 
-// Potentiometer connected to SDA pin (A4)
-#define POT A4
-
-int stepPin = STEP_Y;
-int dirPin = DIR_Y;
+//AccelStepper stepper(AccelStepper::DRIVER,STEP,DIR);
+AccelStepper stepper(AccelStepper::DRIVER, STEP_X, DIR_X);
 
 int pot;
 int periodMin = 50;
 int periodMax = 10000;
 int period = periodMax;
 
-String inString = "";
-int dir = 0;
+int dir = 1;
 
-boolean manualMode = false;
 boolean spinning = false;
+
+String inString = "";
+
 
 void setup() {
   Serial.begin(115200);
 
+  /*
   pinMode(ENABLE, OUTPUT);
   digitalWrite(ENABLE, LOW);
   pinMode(dirPin, OUTPUT);
   digitalWrite(dirPin, LOW);
   pinMode(stepPin, OUTPUT);
   digitalWrite(stepPin, LOW);
-  
+  */
+  stepper.setEnablePin(ENABLE);
+
   Serial.println("ready");
-  Serial.flush();
+
+  stepper.enableOutputs();
+
 }
 
+
 void loop() {
-
-  if(manualMode) {
-    pot = analogRead(POT);
-    period = map(pot, 1, 1023, periodMax, periodMin);
-  }
   
-  if(dir > 0) {
-    digitalWrite(dirPin, LOW);
+  if(spinning) {
+    stepper.setSpeed(1/period);
+    stepper.move(1000 * dir);
+    stepper.run();
   } else {
-    digitalWrite(dirPin, HIGH); 
+    stepper.stop();
   }
 
-  if(dir == 0) {
-    manualMode = true;
-  } else {
-    manualMode = false;
-  }
-
-  //Serial.print(period);
-  //Serial.print(", ");
-  //Serial.println(periodMax);
-
-  if(spinning && period > periodMin && period < periodMax) {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(period);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(period);
-  }
 
   while(Serial.available() > 0) {
     char inChar = Serial.read();
@@ -88,16 +74,17 @@ void loop() {
 void parseVars() {  
 
   int i = inString.indexOf('d');
-  String inDir = inString.substring(0, i);
+  String inDir = inString.substring(1, i);
   String inPeriod = inString.substring(i+1, inString.length());
 
   dir = inDir.toInt();
   period = inPeriod.toInt();
-  
+  break;
+
   /*
   Serial.print(dir);
   Serial.print(" ");
-  Serial.println(stepDelay);
+  Serial.println(period);
   */
   inString = "";
     
