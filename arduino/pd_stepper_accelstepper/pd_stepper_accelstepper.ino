@@ -79,7 +79,6 @@ void parseVars() {
 
   dir = inDir.toInt();
   period = inPeriod.toInt();
-  break;
 
   /*
   Serial.print(dir);
