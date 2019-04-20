@@ -10,7 +10,7 @@
 #define ENABLE 8
 
 //AccelStepper stepper(AccelStepper::DRIVER,STEP,DIR);
-AccelStepper stepper(AccelStepper::DRIVER, STEP_X, DIR_X);
+AccelStepper stepper(AccelStepper::DRIVER, STEP_Y, DIR_Y);
 
 int pot;
 int periodMin = 50;
@@ -25,31 +25,31 @@ String inString = "";
 
 
 void setup() {
+
   Serial.begin(115200);
 
-  /*
+  //pinMode(STEP_X, OUTPUT);
+  //pinMode(STEP_Y, OUTPUT);
+  //pinMode(STEP_Z, OUTPUT);
+  //pinMode(DIR_X, OUTPUT);
+  //pinMode(DIR_Y, OUTPUT);
+  //pinMode(DIR_Z, OUTPUT);
+
   pinMode(ENABLE, OUTPUT);
   digitalWrite(ENABLE, LOW);
-  pinMode(dirPin, OUTPUT);
-  digitalWrite(dirPin, LOW);
-  pinMode(stepPin, OUTPUT);
-  digitalWrite(stepPin, LOW);
-  */
-  stepper.setEnablePin(ENABLE);
+
+  stepper.setMaxSpeed(1000000);
+  stepper.setAcceleration(10000);
 
   Serial.println("ready");
-
-  stepper.enableOutputs();
-
 }
 
 
 void loop() {
   
   if(spinning) {
-    stepper.setSpeed(1/period);
-    stepper.move(1000 * dir);
-    stepper.run();
+    stepper.move(1000000 * dir);
+    stepper.runSpeed();
   } else {
     stepper.stop();
   }
@@ -57,12 +57,20 @@ void loop() {
 
   while(Serial.available() > 0) {
     char inChar = Serial.read();
+    
     if(inChar == 'b') {
       parseVars();
+      float s = 1000000.0/float(period);
+      //stepper.setSpeed(s);
+      stepper.setMaxSpeed(s);
+      //Serial.println(s,4);
+      //stepper.setCurrentPosition(stepper.targetPosition());
       spinning = true;
+
     } else if(inChar == 'x') {
       spinning = false;
       Serial.println("stop");
+
     } else {
       inString += inChar;
     }
@@ -74,7 +82,7 @@ void loop() {
 void parseVars() {  
 
   int i = inString.indexOf('d');
-  String inDir = inString.substring(1, i);
+  String inDir = inString.substring(0, i);
   String inPeriod = inString.substring(i+1, inString.length());
 
   dir = inDir.toInt();
@@ -86,5 +94,4 @@ void parseVars() {
   Serial.println(period);
   */
   inString = "";
-    
 }
